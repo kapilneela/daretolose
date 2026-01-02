@@ -24,6 +24,7 @@ The game is built using:
 * **JavaScript (Vanilla)** for game logic and particle physics.
 
 No installation is required. Simply host the `index.html` file on GitHub Pages, Vercel, or Netlify.
+Live Server : daretolose.vercel.app
 
 ## 📜 License
 This project is open-source. Use it to challenge your friends!
