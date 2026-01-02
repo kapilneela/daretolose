@@ -3,385 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dare to Lose</title>
+    <title>Dare to Lose: Starfield</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <style>
-        :root {
-            --neon-pink: #ff00ff;
-            --neon-blue: #00f3ff;
-        }
-        body {
-            font-family: 'Press Start 2P', cursive;
-            touch-action: none;
-            background-color: #050505;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-        .scanlines {
-            background: linear-gradient(
-                to bottom,
-                rgba(255,255,255,0),
-                rgba(255,255,255,0) 50%,
-                rgba(0,0,0,0.2) 50%,
-                rgba(0,0,0,0.2)
-            );
-            background-size: 100% 4px;
-            pointer-events: none;
-            z-index: 50;
-        }
-        .retro-grid {
-            position: absolute;
-            bottom: -50%;
-            left: -50%;
-            width: 200%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(0, 243, 255, 0.3) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.3) 1px, transparent 1px);
-            background-size: 40px 40px;
-            transform: perspective(500px) rotateX(60deg);
-            animation: gridMove 2s linear infinite;
-            opacity: 0.3;
-            pointer-events: none;
-        }
-        @keyframes gridMove {
-            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
-            100% { transform: perspective(500px) rotateX(60deg) translateY(40px); }
-        }
-        .title-glow {
-            text-shadow: 3px 3px 0px #ff00de, -2px -2px 0px #00f3ff;
-        }
-        .text-neon-blue { color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
-        .text-neon-pink { color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); }
-        .retro-checkbox {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--neon-blue);
-            background: black;
-            cursor: pointer;
-            position: relative;
-            margin-right: 10px;
-        }
-        .retro-checkbox:checked {
-            background: var(--neon-blue);
-            box-shadow: 0 0 10px var(--neon-blue);
-        }
-        .retro-checkbox:checked::after {
-            content: '✔';
-            position: absolute;
-            top: -2px;
-            left: 2px;
-            color: black;
-            font-size: 12px;
-        }
-        button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            border-color: gray;
-            color: gray;
-            box-shadow: none;
-        }
-        .btn-active {
-            animation: pulse-border 1.5s infinite;
-        }
-        @keyframes pulse-border {
-            0% { box-shadow: 0 0 5px var(--neon-blue); }
-            50% { box-shadow: 0 0 20px var(--neon-blue); }
-            100% { box-shadow: 0 0 5px var(--neon-blue); }
+        :root { --neon-pink: #ff00ff; --neon-blue: #00f3ff; --engine-orange: #ffcc80; }
+        body { font-family: 'Press Start 2P', cursive; touch-action: none; background-color: #000; overflow: hidden; -webkit-tap-highlight-color: transparent; user-select: none; color: white; }
+        .scanlines { background: linear-gradient(to bottom, transparent, transparent 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; pointer-events: none; z-index: 50; }
+        
+        #menuCanvas { position: absolute; inset: 0; z-index: 0; opacity: 0.8; }
+
+        .title-glow { text-shadow: 3px 3px 0px #ff00de, -2px -2px 0px #00f3ff; }
+        .retro-checkbox { appearance: none; width: 18px; height: 18px; border: 2px solid var(--neon-blue); background: black; cursor: pointer; position: relative; margin-right: 10px; vertical-align: middle; }
+        .retro-checkbox:checked { background: var(--neon-blue); }
+        .retro-checkbox:checked::after { content: '✔'; position: absolute; top: -2px; left: 2px; color: black; font-size: 10px; }
+        
+        .btn-active { animation: pulse-border 1.5s infinite; }
+        @keyframes pulse-border { 0%, 100% { box-shadow: 0 0 5px var(--neon-blue); } 50% { box-shadow: 0 0 15px var(--neon-blue); } }
+
+        #speedBarFill { 
+            background: var(--engine-orange); 
+            box-shadow: 0 0 10px var(--engine-orange); 
+            transition: width 0.4s ease-in-out; 
         }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col items-center justify-center bg-black">
-    <audio id="bgMusic" loop>
-        <source src="https://opengameart.org/sites/default/files/loading_0.mp3" type="audio/mpeg">
-    </audio>
-    <div id="game-container" class="relative w-full h-full max-w-md bg-black shadow-2xl overflow-hidden border-x border-gray-900">
+<body class="h-screen w-screen flex flex-col items-center justify-center">
+    <audio id="bgMusic" loop preload="auto"><source src="https://opengameart.org/sites/default/files/loading_0.mp3" type="audio/mpeg"></audio>
+    
+    <div id="game-container" class="relative w-full h-full max-w-md bg-black shadow-2xl overflow-hidden border-x border-white/5">
         <canvas id="gameCanvas" class="block w-full h-full"></canvas>
         <div class="scanlines absolute inset-0 w-full h-full"></div>
-        <div class="absolute top-6 left-6 z-20 pointer-events-none mix-blend-screen">
-            <p class="text-[10px] text-gray-400 mb-1">SCORE</p>
-            <p id="scoreDisplay" class="text-2xl text-neon-blue">0</p>
+
+        <div id="hud" class="hidden absolute top-6 left-6 z-20 pointer-events-none">
+            <p class="text-[7px] text-gray-500 mb-1 tracking-widest">ENGINE THRUST</p>
+            <div class="w-32 h-2 bg-gray-900 border border-white/10 mb-4">
+                <div id="speedBarFill" class="h-full" style="width: 0%"></div>
+            </div>
+            <p class="text-[7px] text-gray-500 mb-1">SCORE</p>
+            <p id="scoreDisplay" class="text-xl text-white">0</p>
         </div>
-        <div id="startScreen" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/95 backdrop-blur-md px-6">
-            <div class="retro-grid"></div>
+
+        <div id="startScreen" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black px-6">
+            <canvas id="menuCanvas"></canvas>
             <div class="relative z-10 text-center mb-10">
-                <h1 class="text-4xl text-white title-glow leading-tight tracking-tighter mb-2">DARE<br>TO<br>LOSE</h1>
-                <div class="h-1 w-20 bg-neon-pink mx-auto shadow-[0_0_10px_#ff00ff]"></div>
+                <h1 class="text-4xl text-white title-glow leading-tight tracking-tighter mb-4">DARE<br>TO<br>LOSE</h1>
+                <div class="h-1 w-16 bg-neon-pink mx-auto"></div>
             </div>
-            <div class="relative z-10 w-full max-w-xs mb-8">
-                <div class="flex items-center justify-center mb-4">
+            <div class="relative z-10 w-full max-w-xs mb-8 bg-black/60 p-6 border border-white/5 rounded-lg backdrop-blur-sm">
+                <div class="flex items-center justify-center mb-6">
                     <input type="checkbox" id="agreeCheck" class="retro-checkbox">
-                    <label for="agreeCheck" class="text-[10px] text-gray-300 cursor-pointer">
-                        I agree to the <span id="openTcBtn" class="text-neon-pink underline hover:text-white transition">Terms & Rules</span>
-                    </label>
+                    <label for="agreeCheck" class="text-[9px] text-gray-400 cursor-pointer">I AGREE TO THE <span id="openTcBtn" class="text-neon-pink underline">TERMS & RULES</span></label>
                 </div>
-                <button id="startBtn" disabled class="w-full py-4 border-2 border-neon-blue text-neon-blue text-xs tracking-widest bg-black/50 transition-all duration-300">
-                    INSERT COIN (START)
-                </button>
+                <button id="startBtn" disabled class="w-full py-4 border-2 border-neon-blue text-neon-blue text-[10px] tracking-widest bg-black/80 transition-all">CONNECT SYSTEM</button>
             </div>
-            <p class="text-[8px] text-gray-600 relative z-10">VER 2.0 // HIGH SCORE: <span id="highScore">0</span></p>
+            <div class="relative z-10 text-center">
+                <p class="text-[8px] text-gray-500 uppercase mb-1 tracking-widest">High Score</p>
+                <p id="highScore" class="text-neon-blue text-lg">0</p>
+            </div>
         </div>
-        <div id="tcModal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/95 p-6">
+
+        <div id="tcModal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/95 p-6 backdrop-blur-md">
             <div class="border-2 border-neon-pink p-6 w-full max-sm bg-gray-900 relative shadow-[0_0_20px_rgba(255,0,255,0.3)]">
-                <h2 class="text-neon-pink text-sm mb-4 text-center border-b border-gray-700 pb-2">TERMS OF DOOM</h2>
-                <div class="text-[10px] text-gray-300 leading-loose space-y-3 mb-6 h-48 overflow-y-auto">
-                    <p>1. By playing "Dare to Lose", you acknowledge that your skills may be insufficient.</p>
-                    <p>2. If you crash, you are legally bound by the Cyber-Code to perform the randomly generated dare.</p>
-                    <p>3. Dares may include social awkwardness, light exercise, or digital embarrassment.</p>
-                    <p>4. There is no appeal process. The algorithm's judgment is final.</p>
-                    <p>5. Playing this game may result in sudden bursts of adrenaline, laughter, or mild frustration.</p>
-                    <p>6. The developers are not responsible for any cause developers are chill asf.</p>
-                    <p>7. By closing this modal, you confirm your understanding and acceptance of these terms.</p>
-                    <p>8. For legal issues contact :<a href="mailto:legal@doom.com">neelakapil15@gmail.com</a></p>
+                <h2 class="text-neon-pink text-[10px] mb-4 text-center border-b border-gray-700 pb-2">TERMS OF DOOM</h2>
+                <div class="text-[9px] text-gray-300 leading-loose space-y-3 mb-6 h-48 overflow-y-auto pr-2">
+                    <p>1. By playing, you acknowledge that your skills may be insufficient.</p>
+                    <p>2. If you crash, you are bound to perform the randomly generated dare.</p>
+                    <p>3. Dares include social awkwardness or physical exercise.</p>
+                    <p>4. The algorithm's judgment is final.</p>
+                    <p>5. Developers hold no responsibility for dare outcomes as they're chill asf.</p>
+                    <p>5. Legal contact: neelakapil15@gmail.com</p>
                 </div>
-                <button id="closeTcBtn" class="w-full py-3 bg-neon-pink text-black text-xs hover:bg-white transition">I UNDERSTAND</button>
+                <button id="closeTcBtn" class="w-full py-3 bg-neon-pink text-black text-[10px] hover:bg-white transition">I UNDERSTAND</button>
             </div>
         </div>
+
         <div id="gameOverScreen" class="hidden absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/95 px-8 text-center">
-            <h2 class="text-3xl text-red-600 mb-2 title-glow">FATAL ERROR</h2>
-            <p class="text-[10px] text-gray-500 mb-8">SCORE: <span id="finalScore" class="text-white">0</span></p>
-            <div class="w-full border border-neon-blue p-6 mb-8 rounded-sm bg-blue-900/10 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-neon-blue animate-pulse"></div>
-                <p class="text-[10px] text-neon-blue mb-3 uppercase tracking-widest">Your Penalty</p>
-                <p id="dareText" class="text-xs leading-relaxed text-white">Calculating punishment...</p>
+            <h2 class="text-2xl text-red-600 mb-2 title-glow">VOID REACHED</h2>
+            <div class="flex gap-4 justify-center mb-6">
+                <div><p class="text-[7px] text-gray-500">SCORE</p><p id="finalScore" class="text-white text-lg">0</p></div>
+                <div class="border-l border-white/20 pl-4"><p class="text-[7px] text-gray-500">BEST</p><p id="finalBest" class="text-neon-blue text-lg">0</p></div>
             </div>
-            <button id="restartBtn" class="px-6 py-4 border-2 border-white text-white text-xs hover:bg-gray-800 transition active:scale-95">
-                RETRY (IF YOU DARE)
-            </button>
+            <div class="w-full border border-orange-300/30 p-5 mb-6 bg-orange-950/10">
+                <p class="text-[8px] text-orange-300 mb-3 uppercase tracking-widest">Penalty Dare</p>
+                <p id="dareText" class="text-[10px] leading-relaxed text-white italic"></p>
+            </div>
+            <div class="flex flex-col gap-3 w-full">
+                <button id="restartBtn" class="w-full py-4 border-2 border-white text-white text-[10px] tracking-widest hover:bg-white hover:text-black transition">RE-LAUNCH</button>
+                <button id="menuBtn" class="w-full py-3 text-gray-500 text-[8px] tracking-[0.2em] hover:text-white transition uppercase underline">Back to Main Menu</button>
+            </div>
         </div>
+
         <div class="absolute inset-0 z-10 flex">
             <div id="leftZone" class="w-1/2 h-full"></div>
             <div id="rightZone" class="w-1/2 h-full"></div>
         </div>
     </div>
+
     <script>
-        const startScreen = document.getElementById('startScreen');
-        const tcModal = document.getElementById('tcModal');
-        const agreeCheck = document.getElementById('agreeCheck');
-        const startBtn = document.getElementById('startBtn');
-        const openTcBtn = document.getElementById('openTcBtn');
-        const closeTcBtn = document.getElementById('closeTcBtn');
-        const highScoreEl = document.getElementById('highScore');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const menuCanvas = document.getElementById('menuCanvas');
+        const mctx = menuCanvas.getContext('2d');
         const music = document.getElementById('bgMusic');
-        music.volume = 0.5;
+        const dares = ["Do 10 pushups.", "Text your 3rd DM 'I'm a potato'.", "Post a selfie with a spoon.", "15 squats now.", "Text mom 'I love you' randomly.", "45s Plank.", "Spin 10 times then walk straight.", "Lick your elbow for 30s.", "Text crush 'Believe in aliens?'", "Handstand for 15s."];
 
         let highScore = localStorage.getItem('neonDareHighScore') || 0;
-        highScoreEl.innerText = highScore;
+        document.getElementById('highScore').innerText = highScore;
 
-        openTcBtn.addEventListener('click', () => tcModal.classList.remove('hidden'));
-        closeTcBtn.addEventListener('click', () => tcModal.classList.add('hidden'));
-
-        agreeCheck.addEventListener('change', () => {
-            if(agreeCheck.checked) {
-                startBtn.disabled = false;
-                startBtn.classList.add('btn-active');
-                startBtn.innerHTML = "START GAME";
-            } else {
-                startBtn.disabled = true;
-                startBtn.classList.remove('btn-active');
-                startBtn.innerHTML = "INSERT COIN (START)";
-            }
-        });
-
-        const dares = [
-            "Post your 5th most recent photo to your Story without context.",
-            "Send a voice note singing 'Happy Birthday' to your best friend.",
-            "Like the first 5 posts on your feed right now.",
-            "Text your ex (or a random contact): 'I have a confession...'",
-            "Do 10 Burpees immediately.",
-            "Change your profile picture to a potato for 1 hour.",
-            "Let a friend pick your caption for your next post.",
-            "Type your name with your nose and post it.",
-            "Post 'I'm moving to Mars' on your story and don't reply to anyone for 30 mins.",
-            "Send a voice note to the 3rd person in your DM list saying 'I know your secret'.",
-            "Do 15 squats right now.",
-            "Text your best friend 'I've never liked your shoes'.",
-            "Post a selfie and use only a 'clown' emoji as the caption.",
-            "Send a random GIF to the last person you emailed.",
-            "Try to lick your elbow for 30 seconds.",
-            "Text your mom 'I'm getting a pet snake' and see what she says.",
-            "Hold a plank for 45 seconds.",
-            "DM a celebrity a joke.",
-            "Change your Instagram bio to 'I love eating lemons'.",
-            "Post a photo of your feet on your story with the caption 'Content'.",
-            "Send a message to a random contact saying 'You're next'.",
-            "Do 20 jumping jacks.",
-            "Text a random number 'I'm outside' then block them.",
-            "Whisper your next 3 texts out loud before sending.",
-            "Call a friend and just bark like a dog when they pick up.",
-            "Post a story of a blank wall and wait for people to ask what it is.",
-            "Balance a spoon on your nose for 10 seconds.",
-            "Text your crush 'Do you believe in aliens?'",
-            "Try to touch your toes without bending your knees for 20 seconds.",
-            "Update your status to 'I feel like a grape today'.",
-            "Send a voice note of you humming your favorite song to your sibling.",
-            "Text a friend 'I know what you did last summer'.",
-            "Eat a spoonful of hot sauce or mustard.",
-            "Post a screenshot of your home screen to your story.",
-            "DM someone you haven't talked to in a year 'Hey, remember the incident?'",
-            "Speak in an accent for the next 10 minutes.",
-            "Send a text using only emojis to explain your day.",
-            "Spin around 10 times and then try to walk in a straight line.",
-            "Text your dad 'I accidentally bought a tractor'.",
-            "Post a video of you doing a 5-second dance.",
-            "Change your phone wallpaper to a picture of a piece of cheese.",
-            "Send 'I'm not sure if it's true?' to the 5th person on your chat list.",
-            "Do a handstand against a wall for 15 seconds.",
-            "Text your group chat 'I'm retiring from life'.",
-            "Send a photo of your current view to your best friend.",
-            "Mime your favorite hobby for 1 minute.",
-            "Text a random contact 'I have the money, meet me at the spot'.",
-            "Post 'Pineapple belongs on pizza' (or the opposite) to your story.",
-            "Do 10 pushups.",
-            "Send a voice note of you laughing like a villain.",
-            "Text your brother/sister 'I'm the favorite child, officially'.",
-            "Try to juggle three items near you for 10 seconds.",
-            "Post 'I'm deleting all my social media in 5 minutes' and wait.",
-            "Send a heart emoji to the last person who liked your post.",
-            "Type a text with your eyes closed and send it to your best friend.",
-            "Call a pizza place and ask if they sell burgers.",
-            "Drink a glass of water without using your hands.",
-            "Text your boss or a teacher 'I love you' then immediately say 'Oops, wrong person!'"
-        ];
-
-        let animationId, score, gameSpeed, isGameOver;
-        const player = { x: 0, y: 0, w: 30, h: 40, color: '#00f3ff', speed: 12 };
-        let obstacles = [], particles = [], stars = [];
+        let score = 0, gameSpeed = 3, isGameOver = false;
+        let player = { x: 0, y: 0, w: 24, h: 42 };
+        let obstacles = [], stars = [], menuStars = [];
         let moveLeft = false, moveRight = false;
 
-        const leftZone = document.getElementById('leftZone');
-        const rightZone = document.getElementById('rightZone');
-
         function resize() {
-            canvas.width = canvas.parentElement.offsetWidth;
-            canvas.height = canvas.parentElement.offsetHeight;
+            canvas.width = canvas.parentElement.offsetWidth; canvas.height = canvas.parentElement.offsetHeight;
+            menuCanvas.width = canvas.width; menuCanvas.height = canvas.height;
+            initMenuStars();
         }
-        window.addEventListener('resize', resize);
-        resize();
+        window.addEventListener('resize', resize); resize();
 
-        const handleInput = (left, right) => { moveLeft = left; moveRight = right; };
-        leftZone.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(true, false); });
-        leftZone.addEventListener('touchend', (e) => { e.preventDefault(); handleInput(false, false); });
-        rightZone.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(false, true); });
-        rightZone.addEventListener('touchend', (e) => { e.preventDefault(); handleInput(false, false); });
+        function initMenuStars() {
+            menuStars = [];
+            for(let i=0; i<45; i++) menuStars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*1.5, o: Math.random(), s: Math.random()*0.02});
+        }
 
-        function initStars() {
-            stars = [];
-            for(let i=0; i<60; i++) {
-                stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, speed: Math.random() * 2 + 0.5 });
+        function drawMenu() {
+            if(!document.getElementById('startScreen').classList.contains('hidden')) {
+                mctx.clearRect(0,0,canvas.width, canvas.height);
+                menuStars.forEach((s, i) => {
+                    s.o += s.s; if(s.o > 1 || s.o < 0) s.s *= -1;
+                    mctx.fillStyle = `rgba(255,255,255,${s.o})`;
+                    mctx.beginPath(); mctx.arc(s.x, s.y, s.r, 0, Math.PI*2); mctx.fill();
+                    for(let j=i+1; j<menuStars.length; j++) {
+                        let dx = s.x - menuStars[j].x, dy = s.y - menuStars[j].y;
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        if(dist < 70) {
+                            mctx.strokeStyle = `rgba(255,255,255,${0.15 * (1 - dist/70)})`;
+                            mctx.lineWidth = 0.5;
+                            mctx.beginPath(); mctx.moveTo(s.x, s.y); mctx.lineTo(menuStars[j].x, menuStars[j].y); mctx.stroke();
+                        }
+                    }
+                });
+                requestAnimationFrame(drawMenu);
             }
         }
+        drawMenu();
 
-        function createExplosion(x, y) {
-            for(let i=0; i<25; i++) {
-                particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12, life: 1.0, color: Math.random() > 0.5 ? '#ff00ff' : '#00f3ff' });
-            }
-        }
+        document.getElementById('openTcBtn').onclick = (e) => { e.preventDefault(); document.getElementById('tcModal').classList.remove('hidden'); };
+        document.getElementById('closeTcBtn').onclick = () => document.getElementById('tcModal').classList.add('hidden');
+
+        document.getElementById('agreeCheck').onchange = e => {
+            const btn = document.getElementById('startBtn');
+            btn.disabled = !e.target.checked;
+            btn.classList.toggle('btn-active', e.target.checked);
+        };
+
+        const setMove = (l, r) => { moveLeft = l; moveRight = r; };
+        document.getElementById('leftZone').onpointerdown = () => setMove(true, false);
+        document.getElementById('leftZone').onpointerup = () => setMove(false, false);
+        document.getElementById('rightZone').onpointerdown = () => setMove(false, true);
+        document.getElementById('rightZone').onpointerup = () => setMove(false, false);
 
         function drawGame() {
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#ffffff';
+            if(isGameOver) return;
+            ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width, canvas.height);
             stars.forEach(s => {
-                ctx.fillRect(s.x, s.y, 2, 2);
-                s.y += s.speed * (gameSpeed * 0.2);
-                if(s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
+                ctx.strokeStyle = `rgba(255,255,255,${s.o})`; ctx.lineWidth = s.z;
+                ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x, s.y + (gameSpeed * 1.5)); ctx.stroke();
+                s.y += s.z * (gameSpeed * 0.7);
+                if(s.y > canvas.height) { s.y = -20; s.x = Math.random()*canvas.width; }
             });
-            if(isGameOver) {
-                particles.forEach((p, i) => {
-                    p.x += p.vx; p.y += p.vy; p.life -= 0.02;
-                    ctx.globalAlpha = p.life;
-                    ctx.fillStyle = p.color;
-                    ctx.fillRect(p.x, p.y, 4, 4);
-                    if(p.life <= 0) particles.splice(i, 1);
-                });
-                ctx.globalAlpha = 1;
-                drawObstacles();
-                if(particles.length > 0) requestAnimationFrame(drawGame);
-                return;
-            }
-            if(moveLeft && player.x > 0) player.x -= player.speed;
-            if(moveRight && player.x < canvas.width - player.w) player.x += player.speed;
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = player.color;
-            ctx.fillStyle = player.color;
-            ctx.beginPath();
-            ctx.moveTo(player.x + player.w/2, player.y);
-            ctx.lineTo(player.x + player.w, player.y + player.h);
-            ctx.lineTo(player.x, player.y + player.h);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            if(Math.random() < 0.02 + (score * 0.0001)) {
-                obstacles.push({ x: Math.random() * (canvas.width - 40), y: -50, w: Math.random() * 30 + 20, h: Math.random() * 30 + 20, color: Math.random() > 0.5 ? '#ff00ff' : '#ff3333' });
-            }
-            obstacles.forEach((obs, idx) => {
-                obs.y += gameSpeed;
-                if (player.x < obs.x + obs.w && player.x + player.w > obs.x && player.y < obs.y + obs.h && player.y + player.h > obs.y) gameOver();
-                if(obs.y > canvas.height) {
-                    obstacles.splice(idx, 1);
-                    score++;
-                    document.getElementById('scoreDisplay').innerText = score;
-                    if(score % 20 === 0) gameSpeed += 0.5;
-                }
+            if(moveLeft && player.x > 5) player.x -= 7;
+            if(moveRight && player.x < canvas.width - player.w - 5) player.x += 7;
+            if(Math.random() < 0.015 + (score * 0.0001)) obstacles.push({x: Math.random()*(canvas.width-30), y: -40, w: 25, h: 25});
+            obstacles.forEach((o, i) => {
+                o.y += gameSpeed;
+                ctx.strokeStyle = '#00f3ff'; ctx.lineWidth = 1.5; ctx.strokeRect(o.x, o.y, o.w, o.h);
+                if(player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) endGame();
+                if(o.y > canvas.height) { obstacles.splice(i,1); score++; }
             });
-            drawObstacles();
-            animationId = requestAnimationFrame(drawGame);
-        }
-
-        function drawObstacles() {
-            obstacles.forEach(obs => {
-                ctx.strokeStyle = obs.color;
-                ctx.lineWidth = 2;
-                ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
-                ctx.fillStyle = obs.color;
-                ctx.globalAlpha = 0.2;
-                ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
-                ctx.globalAlpha = 1;
-            });
+            gameSpeed = 3 + (score * 0.1);
+            document.getElementById('speedBarFill').style.width = Math.min((gameSpeed - 3) * 12, 100) + '%';
+            document.getElementById('scoreDisplay').innerText = score;
+            ctx.save(); ctx.translate(player.x + player.w/2, player.y + player.h/2);
+            ctx.rotate(moveLeft ? -0.2 : (moveRight ? 0.2 : 0));
+            ctx.fillStyle = Math.random() > 0.5 ? '#ffcc80' : '#ff9800';
+            ctx.beginPath(); ctx.moveTo(-4, 18); ctx.lineTo(0, 18 + (15 * (gameSpeed/3))); ctx.lineTo(4, 18); ctx.fill();
+            ctx.fillStyle = '#fff'; ctx.fillRect(-7, -12, 14, 25);
+            ctx.beginPath(); ctx.moveTo(-7, -12); ctx.lineTo(0, -22); ctx.lineTo(7, -12); ctx.fill(); ctx.restore();
+            requestAnimationFrame(drawGame);
         }
 
         function startGame() {
-            player.x = canvas.width/2 - 15;
-            player.y = canvas.height - 100;
-            obstacles = [];
-            particles = [];
-            score = 0;
-            gameSpeed = 5;
-            isGameOver = false;
-            document.getElementById('scoreDisplay').innerText = '0';
-            startScreen.classList.add('hidden');
+            score = 0; gameSpeed = 3; isGameOver = false; obstacles = []; stars = [];
+            player = { x: canvas.width/2 - 12, y: canvas.height - 120, w: 24, h: 42 };
+            for(let i=0; i<50; i++) stars.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, z:Math.random()*2+1, o:Math.random()});
+            document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('gameOverScreen').classList.add('hidden');
-            music.currentTime = 0;
-            music.play().catch(()=>{});
-            initStars();
+            document.getElementById('hud').classList.remove('hidden');
+            music.currentTime = 0; music.play().catch(()=>{});
             drawGame();
         }
 
-        function gameOver() {
-            isGameOver = true;
-            createExplosion(player.x + player.w/2, player.y + player.h/2);
-            music.pause();
-            if(score > highScore) {
-                highScore = score;
-                localStorage.setItem('neonDareHighScore', highScore);
-                highScoreEl.innerText = highScore;
-            }
-            document.getElementById('dareText').innerText = dares[Math.floor(Math.random() * dares.length)];
+        function endGame() {
+            isGameOver = true; music.pause();
+            document.getElementById('hud').classList.add('hidden');
+            if(score > highScore) { highScore = score; localStorage.setItem('neonDareHighScore', highScore); }
             document.getElementById('finalScore').innerText = score;
-            setTimeout(() => { document.getElementById('gameOverScreen').classList.remove('hidden'); }, 800);
+            document.getElementById('finalBest').innerText = highScore;
+            document.getElementById('highScore').innerText = highScore;
+            document.getElementById('dareText').innerText = dares[Math.floor(Math.random()*dares.length)];
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+        function backToMenu() {
+            isGameOver = true;
+            music.pause();
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            drawMenu(); 
         }
 
-        startBtn.addEventListener('click', startGame);
-        document.getElementById('restartBtn').addEventListener('click', startGame);
-        initStars();
-        ctx.fillStyle = '#050505';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        document.getElementById('startBtn').onclick = startGame;
+        document.getElementById('restartBtn').onclick = startGame;
+        document.getElementById('menuBtn').onclick = backToMenu;
     </script>
 </body>
 </html>
